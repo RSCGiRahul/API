@@ -20,7 +20,6 @@ class MusicController extends Controller
         return (new SectionMusicResource($sectionMusic))
                 ->response()
                 ->setStatusCode(200);
-        // dd($sectionMusic->toArray());
     }
 
 // if($_GET["p"]=="fav_sound")
@@ -28,8 +27,12 @@ class MusicController extends Controller
     public function favorites(Request $request)
     {
         // make validation here for user_id and sound_id
-        // $user = User::where('fb_id', $request->fb_id)->first();
-        // $user->favorites()->attach($request->sound_id);
+        $this->validate($request,[
+            'fb_id'=>'required',
+            'sound_id' => 'required'
+         ]);
+        $user = User::where('fb_id', $request->fb_id)->first();
+        $user->favorites()->attach($request->sound_id);
         $sound = Music::find($request->sound_id);
         $array[] = [
             "id" => $request->sound_id,
@@ -44,7 +47,7 @@ class MusicController extends Controller
             "created" => "232",
         ];
         // dd($json);
-        return response()->json(['msg'=> ["response" =>"successful"]]);
+        return response()->json(['msg'=> ["response" => $array]]);
 
     }
 

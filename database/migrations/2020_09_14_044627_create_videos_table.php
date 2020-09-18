@@ -22,6 +22,11 @@ class CreateVideosTable extends Migration
             $table->text('gif')->nullable();
             $table->text('view')->nullable();
             $table->integer('music_id')->nullable();
+
+            $table->unsignedBigInteger('section_id');
+            $table->foreign('section_id')->references('id')->on('sections')->onDelete('cascade');
+
+
             $table->timestamps();
             $table->softDeletes();
         });

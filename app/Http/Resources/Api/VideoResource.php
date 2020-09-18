@@ -60,10 +60,10 @@ class VideoResource extends ResourceCollection
             "fb_id" => $data->user->fb_id,
             'user_info' => $data->user,
             'count' => [
-                "like_count" => count($data->likes),
-                "video_comment_count" => 2,
+                "like_count" => $data->likeable_count,
+                "video_comment_count" => $data->comments_count,
             ],
-            "liked" =>  count($data->likes),
+            "liked" =>  $data->likeable_count,
             "video" => $data->video,
             "thum"=> $data->thum,
             "gif"=> $data->gif,
@@ -76,7 +76,7 @@ class VideoResource extends ResourceCollection
                         "mp3" => $data->music ? $data->music->id . '.mp3' : null ,
                         "acc" => $data->music ? $data->music->id. '.acc' : null
                     ],
-                ]                        
+                ]
                 ),
             "created_at" => $data->created_at,
 

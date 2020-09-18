@@ -2,7 +2,11 @@
 
 namespace App;
 
+use App\Models\Comment;
+use App\Models\Like;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Passport\HasApiTokens;
@@ -14,7 +18,7 @@ use App\Models\Follower;
 
 class User extends Authenticatable
 {
-    use HasApiTokens,Notifiable;
+    use HasApiTokens, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -22,7 +26,7 @@ class User extends Authenticatable
      * @var array
      */
     protected $fillable = [
-        'fb_id', 'profile_pic', 'version', 'first_name', 'last_name', 'bio', 'gender', 'device', 'signup_type','username', 'action', 'email', 'password'
+        'fb_id', 'profile_pic', 'version', 'first_name', 'last_name', 'bio', 'gender', 'device', 'signup_type', 'username', 'action', 'email', 'password'
     ];
 
     /**
@@ -46,13 +50,13 @@ class User extends Authenticatable
     /**
      * mutator
      */
-    public function setPasswordAttribute( $value )
+    public function setPasswordAttribute($value)
     {
         $this->attributes['password'] = Hash::make($value);
     }
 
     /**
-     * 
+     *
      */
     public function video()
     {
@@ -60,8 +64,8 @@ class User extends Authenticatable
     }
 
     /**
-     * 
-     * 
+     *
+     *
      */
     public function music()
     {
@@ -69,19 +73,59 @@ class User extends Authenticatable
     }
 
     /**
-     * 
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
     public function followers()
     {
         return $this->hasMany(Follower::class);
     }
-    
+
     /**
-     * 
-     * Many to Many
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
      */
     public function favorites()
     {
         return $this->belongsToMany(\App\Models\Music::class, "user_favorites_music");
     }
+
+//    /**
+//     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+//     */
+//    public function likedVideos()
+//    {
+//        return $this->belongsToMany(Video::class, 'user_video_statuses');
+//    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function follower(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'followers', 'user_id', 'followed_by');
+    }
+
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     */
+    public function follow(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'followers', 'followed_by', 'user_id');
+    }
+
+
+    public function likedVideos() :HasMany
+    {
+        return $this->hasMany(Like::class)->where('likeable_type', Video::class);
+    }
+
+
+    public function commetableVideos() :HasMany
+    {
+        return $this->hasMany(Comment::class)->where('commentable_type', Video::class);
+    }
+
+
+
 }

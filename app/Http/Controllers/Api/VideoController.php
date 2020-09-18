@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\UserLikedResource;
+use App\Models\UserVideoStatus;
 use Illuminate\Http\Request;
 use App\Models\Video;
 use App\Http\Resources\Api\VideoResource;
@@ -18,13 +20,13 @@ class VideoController extends Controller
 {
     public function index()
     {
- 
-        // https://laracasts.com/discuss/channels/general-discussion/how-do-i-seed-many-to-many-polymorphic-relationships?page=1
        $videos = Video::with(
             'user:id,first_name,last_name,profile_pic,fb_id',
             'music',
             'likes'
-            )->paginate(15);
+            )
+           ->withCount(['likeable', 'comments'])
+           ->paginate(15);
         return (  new VideoResource( $videos) )
                     ->response()
                     ->setStatusCode(200);
@@ -38,7 +40,8 @@ class VideoController extends Controller
         ::with(
             'video',
             'video.music',
-            'video.likes',
+            'video.comments',
+            'video.likeable',
             'followers'
         )
         ->where('fb_id', $fbId)->get();
@@ -46,15 +49,42 @@ class VideoController extends Controller
                     ->response()
                     ->setStatusCode(200);
     }
-    
+
+
     /**
+     * $_GET["p"]=="likeDislikeVideo"
+     */
+    public function updateVideoStatus($fbId, $videoId, Request $request)
+    {
+        $status = $request->action;
+        $userId = User::where('fb_id', $fbId)->first()->id;
+        $video = Video::with('user', 'likeable')->find($videoId);
+        if ( $video->likeable->isNotEmpty()) {
+            $video->likeable()->delete();
+            $msg = "video unlike";
+
+        } else  {
+            $video->likeable()
+                    ->create([ 'user_id' => $userId ]);
+            $msg = "actions success";
+        }
+        return response(["msg" => $msg ?? '']);
+    }
+
+    /**
+     * $_GET["p"]=="postComment"
      * Post comment
      */
     public function comment(VideoCommentRequest $request)
     {
+        $this->validate($request,[
+            'body'=>'required',
+            'user_id'=>'required',
+            'video_id' => 'required'
+         ]);
 // https://blog.logrocket.com/polymorphic-relationships-in-laravel/
     $video = Video::findOrFail($request->video_id);
-    $input = $request->only('body', 'user_id');   
+    $input = $request->only('body', 'user_id');
     $comment = $video->comments()->create( $input);
     return ( new CreateVideoCommentResource( $comment))
             ->response()
@@ -63,9 +93,10 @@ class VideoController extends Controller
     }
 
     /**
+     * $_GET["p"]=="showVideoComments"
      * // showVideoComments
      */
-    
+
     public function videoComment($videoId)
     {
         $video = Video::with('comments', 'comments.user:id,first_name,last_name,profile_pic,fb_id')->findOrFail($videoId);
@@ -73,5 +104,52 @@ class VideoController extends Controller
         return new VideoCommentResource($video);
     }
 
-   
+    /**
+     * $_GET["p"]=="my_liked_video"
+     * @param $userId
+     */
+    public function userLikedVideos($userId)
+    {
+//      $user =  User::with('likeable','likedVideos', 'likedVideos.music')
+//                ->where('fb_id', $userId)->first();
+        $user =  User::with('likedVideos', 'commetableVideos')
+            ->where('fb_id', $userId)->first();
+        return ( new UserLikedResource($user))
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * SearchByHashTag
+     */
+    public function search($searchItem = null)
+    {
+      $videos =   Video::query()
+                    ->inRandomOrder()
+                    ->whereLike('description', $searchItem)
+                    ->get() ;
+      $videos ->load(['user', 'music', 'likes']);
+        return (  new VideoResource( $videos) )
+            ->response()
+            ->setStatusCode(200);
+    }
+
+    /**
+     * $_GET["p"]=="updateVideoView"
+     * post
+     */
+    public function view(Request $request)
+    {
+        Video::find($request->id)->increment('view');
+        return response(['msg' =>
+            [
+                array(
+                    "response" =>"success"
+                )
+            ]
+        ]);
+
+    }
+
+
 }

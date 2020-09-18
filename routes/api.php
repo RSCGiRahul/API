@@ -13,15 +13,33 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::post('signup', 'Api\RegisterController@signup');
-Route::get('videos', 'Api\VideoController@index');
-Route::get('my-videos/{fbId}', 'Api\VideoController@userVideos');
-Route::post('comment', 'Api\VideoController@comment');
+Route::post('signup', 'RegisterController@signup');
 
-Route::get('video-comment/{videoId}', 'Api\VideoController@videoComment');
-Route::get('section-music', 'Api\MusicController@index');
-Route::post('favorites', 'Api\MusicController@favorites');
-Route::get('user-fav-music/{userFbId}', 'Api\MusicController@userFavoriteMusic');
+Route::get('section-music', 'MusicController@index');
+Route::post('favorites', 'MusicController@favorites');
+Route::get('user-fav-music/{userFbId}', 'MusicController@userFavoriteMusic');
+
+
+Route::get('discover', 'DiscoverController@index');
+
+
+Route::get('videos', 'VideoController@index');
+Route::get('my-videos/{fbId}', 'VideoController@userVideos');
+Route::post('comment', 'VideoController@comment');
+Route::get('video-comment/{videoId}', 'VideoController@videoComment');
+Route::get('detail/{fbId}', 'UserController@detail');
+Route::get('followers/{fbId}', 'UserController@followers');
+Route::get('follow/{fbId}', 'UserController@follow');
+Route::post('user/update', 'UserController@update');
+
+
+Route::get('user-liked-videos/{userFbId}', 'VideoController@userLikedVideos');
+Route::get('video/search/{string?}', 'VideoController@search');
+Route::post('update-video-status/{fbId}/{videoId}', 'VideoController@updateVideoStatus');
+Route::post('video/view', 'VideoController@view');
+
+
+//Route::group('prefix')
 
 
 Route::middleware('auth:api')->get('/user', function (Request $request) {
